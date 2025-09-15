@@ -1,0 +1,121 @@
+{
+  "concepts": [
+    "자연수",
+    "분수",
+    "소수",
+    "덧셈",
+    "뺄셈",
+    "곱셈",
+    "나눗셈",
+    "평면도형",
+    "입체도형",
+    "길이",
+    "둘레",
+    "부피",
+    "넓이",
+    "겉넓이"
+  ]
+}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>개념 맵 도구</title>
+  <style>
+    body { font-family: sans-serif; margin:0; }
+    header { background:#2c3e50; color:white; padding:10px; text-align:center; }
+    .container { display:flex; height:100vh; }
+    .panel { width:250px; background:#ecf0f1; padding:10px; overflow-y:auto; }
+    .concept { background:#3498db; color:white; padding:8px; margin:5px 0; border-radius:5px; cursor:grab; text-align:center; }
+    .canvas { flex:1; position:relative; background:#fdfdfd; }
+    .placed { position:absolute; background:#e74c3c; color:white; padding:6px 10px; border-radius:12px; cursor:pointer; }
+    svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>개념 맵 도구</h2>
+    <p>개념을 드래그하여 배치하고 두 개 선택해 연결</p>
+  </header>
+  <div class="container">
+    <div class="panel" id="panel"></div>
+    <div class="canvas" id="canvas">
+      <svg id="svg"></svg>
+    </div>
+  </div>
+<script>
+const concepts = ['자연수', '분수', '소수', '덧셈', '뺄셈', '곱셈', '나눗셈', '평면도형', '입체도형', '길이', '둘레', '부피', '넓이', '겉넓이'];
+
+const panel = document.getElementById("panel");
+const canvas = document.getElementById("canvas");
+const svg = document.getElementById("svg");
+let dragged = null;
+let placed = [];
+let selected = [];
+
+// 개념 버튼 생성
+concepts.forEach(c => {
+  const div = document.createElement("div");
+  div.className="concept";
+  div.textContent=c;
+  div.draggable=true;
+  div.addEventListener("dragstart",e=>{ dragged=c; });
+  panel.appendChild(div);
+});
+
+// 캔버스 드롭
+canvas.addEventListener("dragover",e=>e.preventDefault());
+canvas.addEventListener("drop",e=>{
+  e.preventDefault();
+  if(!dragged) return;
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+  const id=Date.now();
+  const tag={id,concept:dragged,x,y};
+  placed.push(tag);
+  addTag(tag);
+  dragged=null;
+});
+
+function addTag(tag){
+  const div=document.createElement("div");
+  div.className="placed";
+  div.textContent=tag.concept;
+  div.style.left=(tag.x-40)+"px";
+  div.style.top=(tag.y-15)+"px";
+  div.dataset.id=tag.id;
+  div.addEventListener("click",()=>toggleSelect(tag.id,div));
+  canvas.appendChild(div);
+}
+
+function toggleSelect(id,div){
+  if(selected.includes(id)){ 
+    selected=selected.filter(s=>s!==id);
+    div.style.border="";
+  } else {
+    selected.push(id);
+    div.style.border="2px solid yellow";
+  }
+  if(selected.length===2){ connect(); }
+}
+
+function connect(){
+  const a=placed.find(p=>p.id===selected[0]);
+  const b=placed.find(p=>p.id===selected[1]);
+  if(!a||!b) return;
+  const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1",a.x);
+  line.setAttribute("y1",a.y);
+  line.setAttribute("x2",b.x);
+  line.setAttribute("y2",b.y);
+  line.setAttribute("stroke","#2c3e50");
+  line.setAttribute("stroke-width","2");
+  svg.appendChild(line);
+  selected=[];
+  document.querySelectorAll(".placed").forEach(d=>d.style.border="");
+}
+</script>
+</body>
+</html>
